@@ -1,0 +1,3 @@
+[build]
+# Pass KaTeX header to rustdoc so $...$ and $$...$$ render in docs.
+rustdocflags = ["--html-in-header", "doc/katex-header.html"]

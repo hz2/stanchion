@@ -1,0 +1,6 @@
+# Pinned nightly matching Kani's requirement.
+# Run `cargo kani setup` after `nix develop` to install the Kani toolchain.
+# For Verus (requires stable 1.95.0) use `nix develop .#verus`.
+[toolchain]
+channel    = "nightly-2025-12-03"
+components = ["rustc", "cargo", "rustfmt", "rust-src", "rustc-dev", "llvm-tools"]

@@ -1,0 +1,34 @@
+{
+  "nodes": [
+    { "id": 0, "label": "entry",        "service_rate": 20.0 },
+    { "id": 1, "label": "lane_a",       "service_rate":  4.0 },
+    { "id": 2, "label": "lane_b",       "service_rate":  3.0 },
+    { "id": 3, "label": "security_a",   "service_rate":  5.0 },
+    { "id": 4, "label": "security_b",   "service_rate":  4.5 },
+    { "id": 5, "label": "exit",         "service_rate": 30.0 }
+  ],
+  "edges": [
+    { "from": 0, "to": 1, "capacity": 4.0, "cost": 1.0 },
+    { "from": 0, "to": 2, "capacity": 3.0, "cost": 1.0 },
+    { "from": 1, "to": 3, "capacity": 4.0, "cost": 2.0 },
+    { "from": 2, "to": 4, "capacity": 3.0, "cost": 2.0 },
+    { "from": 3, "to": 5, "capacity": 5.0, "cost": 1.0 },
+    { "from": 4, "to": 5, "capacity": 5.0, "cost": 1.0 }
+  ],
+  "source": 0,
+  "sink": 5,
+  "simulation": {
+    "max_time": 3600.0,
+    "arrival_rate": 3.0,
+    "seed": 42,
+    "max_events": null
+  },
+  "routing": [
+    [0.0, 0.5, 0.5, 0.0, 0.0, 0.0],
+    [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+    [0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+    [0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+    [0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  ]
+}
