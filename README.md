@@ -3,30 +3,40 @@
 A Rust network flow simulator and stanchion queue optimizer.
 
 Stanchion posts and retractable belts form directed networks where people
-flow from entry to service.  This library models those networks using
-classical network flow, queueing theory, and dynamic flow algorithms.
+flow from entry to service. This library models those networks using
+classical network flow, queueing theory, and dynamic flow algorithms,
+and answers two operational questions: when should you connect two posts
+(add a belt), and when should you remove one?
 
 ## Algorithms
 
-**Max-flow**
-- Dinic (O(V^2 E); O(E sqrt(V)) for unit graphs)
-- Push-relabel FIFO with gap heuristic (O(V^2 sqrt(E)))
-- Capacity scaling (O(m^2 log U); handles large integer capacities)
+**Max-flow** &mdash; find $f^* = \max |f|$ subject to capacity and conservation
 
-**Min-cost flow**
-- Successive shortest paths with Johnson potentials
-- Network simplex (best practical MCF; spanning-tree pivots)
-- Cycle canceling via Bellman-Ford negative-cycle detection
+| Algorithm | Complexity | Notes |
+|---|---|---|
+| Dinic | $O(V^2 E)$; $O(E\sqrt{V})$ unit graphs | general workhorse |
+| Push-relabel (FIFO + gap) | $O(V^2\sqrt{E})$ | better on dense graphs |
+| Capacity scaling | $O(m^2 \log U)$ | best when $U \gg V$ |
 
-**Routing**
-- Dijkstra (O((V+E) log V); non-negative costs)
-- Bellman-Ford (O(VE); handles negative costs, detects negative cycles)
-- Floyd-Warshall all-pairs shortest paths (O(V^3))
-- All simple s-t paths (DFS with cap)
+**Min-cost flow** &mdash; minimise $\sum_e w(e)\,f(e)$ subject to $|f| = F^*$
+
+| Algorithm | Complexity | Notes |
+|---|---|---|
+| Successive shortest paths | $O(F(E + V\log V))$ | Dijkstra + Johnson potentials |
+| Network simplex | $O(nm\log n)$ empirical | best in practice |
+| Cycle canceling | pseudo-polynomial | simplest to verify |
+
+**Routing** &mdash; shortest paths on the original arc-cost graph
+
+- Dijkstra: $O((V+E)\log V)$, non-negative costs
+- Bellman-Ford: $O(VE)$, handles negative costs, detects negative cycles
+- Floyd-Warshall: $O(V^3)$ all-pairs
+- All simple $s$-$t$ paths via DFS
 
 **Queueing**
-- Jackson network steady-state analysis (traffic equations, M/M/1)
-- Event-driven simulation with Poisson arrivals and exponential service
+
+- Jackson network steady-state: solve $(I - R^\top)\lambda = \gamma$, apply product-form theorem
+- Event-driven simulation: Poisson arrivals, exponential service, validates against Jackson $L = \rho/(1-\rho)$
 
 ## Getting started
 
@@ -50,7 +60,8 @@ cargo kani
 
 ## Configuration
 
-Networks can be described in JSON:
+Networks are described in JSON. Each node carries a service rate $\mu_i$;
+each edge carries a capacity $c_{ij}$ and cost $w_{ij}$.
 
 ```json
 {
@@ -87,17 +98,49 @@ let result = Dinic.max_flow(&net.graph, s, t)?;
 println!("max flow: {}", result.max_flow);
 ```
 
+## Theory
+
+The core result is the **max-flow min-cut theorem**:
+
+$$\max_f |f| \;=\; \min_{(S,T)} \sum_{\substack{(u,v)\in E \\ u\in S,\, v\in T}} c(u,v)$$
+
+The min-cut identifies saturated belts; adding capacity to any cut arc
+directly raises throughput.
+
+A flow is **min-cost** iff the residual graph $G_f$ contains no negative-cost
+cycle. The reduced cost under potentials $\pi$ is
+
+$$\bar{w}(u,v) = w(u,v) + \pi(u) - \pi(v) \ge 0$$
+
+for all arcs in $G_f$ at optimality (complementary slackness).
+
+For the stochastic layer, Jackson's theorem gives the product-form steady state
+of an open queueing network: each node $i$ with utilisation $\rho_i = \lambda_i/\mu_i < 1$
+behaves as an independent $M/M/1$ queue with mean length
+
+$$L_i = \frac{\rho_i}{1 - \rho_i}, \qquad W_i = \frac{1}{\mu_i - \lambda_i}$$
+
+where $\lambda_i$ solves the traffic equations
+$\lambda_i = \gamma_i + \sum_j \lambda_j r_{ji}$.
+
+The max-weight scheduler at each slot picks
+
+$$i^* = \arg\max_i\; w_i Q_i(t)$$
+
+and is throughput-optimal by the Lyapunov drift argument of
+Tassiulas and Ephremides (1992).
+
+Full derivations are in `doc/theory.md` and `doc/background.md`.
+
 ## Formal verification
 
-Core graph and flow invariants are verified with [Kani](https://github.com/model-checking/kani):
+Core invariants are verified with [Kani](https://github.com/model-checking/kani):
 
-- XOR back-edge pairing (forward at even index, back at `i ^ 1`)
-- `push_flow` antisymmetry (pushing `d` on arc, `-d` on back-edge)
-- Fresh residual capacity equals original capacity
-- `is_forward_edge` correctly identifies even-indexed edges
-- Source/sink presence checked at build time
-
-Run proofs:
+- XOR back-edge pairing: forward arc at index $i$ (even), back-arc at $i \oplus 1$
+- `push_flow` antisymmetry: pushing $\delta$ on arc $i$ and $-\delta$ on $i \oplus 1$
+- Residual capacity of a fresh graph equals $c(e)$
+- `is_forward_edge` $\iff$ even index
+- `build()` without source or sink returns an error
 
 ```sh
 nix develop .#kani
@@ -108,24 +151,29 @@ cargo kani
 
 ```
 src/
-  graph/        DiGraph, GraphBuilder, ResidualGraph
-  flow/         MaxFlowSolver trait + Dinic, PushRelabel, CapacityScaling
+  graph/        DiGraph, GraphBuilder, ResidualGraph (XOR back-edge store)
+  flow/         MaxFlowSolver + Dinic, PushRelabel, CapacityScaling
   flow/min_cost MinCostFlowSolver + SSP, NetworkSimplex, CycleCanceling
-  routing/      Dijkstra, Bellman-Ford, Floyd-Warshall
-  queue/        JacksonNetwork, traffic equations
-  sim/          event-driven SimulationEngine
+  routing/      Dijkstra, Bellman-Ford, Floyd-Warshall, all simple paths
+  queue/        JacksonNetwork, traffic equations, steady-state analysis
+  sim/          event-driven SimulationEngine, Poisson/exponential processes
   scheduling/   MaxWeightScheduler (Tassiulas-Ephremides)
-  dynamic/      time-expanded graph for dynamic flows
+  dynamic/      time-expanded graph for flows with transit times
   opt/          min-cut identification, stanchion placement decisions
-  config/       JSON config load/build
-  kani_proofs/  Kani formal verification harnesses
+  config/       JSON network config (serde)
+  kani_proofs   Kani verification harnesses
 doc/
-  theory.md     mathematical background for all algorithms
+  theory.md     condensed mathematical reference
+  background.md explanatory background, intuition, and architecture guide
+examples/
+  airport_security.json   6-node example network
 ```
 
 ## References
 
 - Ahuja, Magnanti, Orlin. *Network Flows*. Prentice Hall, 1993.
 - Williamson. *Network Flow Algorithms*. Cambridge, 2019.
-- MIT 6.854 Advanced Algorithms lecture notes.
-- Tassiulas and Ephremides (1992). Max-weight scheduling and network stability.
+- MIT 6.854 Advanced Algorithms lecture notes (Karger, 2008).
+- Tassiulas and Ephremides. "Stability properties of constrained queueing systems
+  and scheduling policies for maximum throughput in multihop radio networks."
+  *IEEE Transactions on Automatic Control* 37(12), 1992.
