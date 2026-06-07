@@ -8,6 +8,8 @@ on:
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: "-D warnings"
+  # opt into Node.js 24 for actions before the June 16 2026 forced migration
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   test:
@@ -41,29 +43,16 @@ jobs:
   kani:
     name: kani proofs
     runs-on: ubuntu-latest
-    # kani proofs run on the pinned nightly devShell
+    # Kani manages its own toolchain; do not use nix here.
+    # The official action installs kani-verifier and the required nightly.
     steps:
       - uses: actions/checkout@v4
 
-      - name: install nix
-        uses: cachix/install-nix-action@v27
-        with:
-          nix_path: nixpkgs=channel:nixos-unstable
-
-      - name: cache nix store
-        uses: actions/cache@v4
-        with:
-          path: /nix/store
-          key: nix-kani-${{ runner.os }}-${{ hashFiles('flake.nix', 'flake.lock', 'rust-toolchain.toml') }}
-          restore-keys: |
-            nix-kani-${{ runner.os }}-
-
-      - name: install cargo-kani
-        run: nix develop .#kani --command cargo install --locked cargo-kani
-
       - name: run kani proofs
-        run: nix develop .#kani --command cargo kani --harness xor_back_edge_pairing
-        # additional harnesses can be added here as coverage grows
+        uses: model-checking/kani-github-action@v1
+        with:
+          # run all harnesses in src/kani_proofs.rs
+          args: "--harness-filter proofs::"
 
   bench-check:
     name: benchmarks compile
