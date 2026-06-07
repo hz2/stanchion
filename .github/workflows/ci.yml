@@ -7,14 +7,17 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  RUSTFLAGS: "-D warnings"
   # opt into Node.js 24 for actions before the June 16 2026 forced migration
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # RUSTFLAGS is set per-job; an empty global RUSTFLAGS passes a literal ""
+  # argument to kani-compiler and causes "multiple input filenames" crashes.
 
 jobs:
   test:
     name: test + clippy
     runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: "-D warnings"
     steps:
       - uses: actions/checkout@v4
 
@@ -45,9 +48,6 @@ jobs:
     runs-on: ubuntu-latest
     # Kani manages its own toolchain; do not use nix here.
     # The official action installs kani-verifier and the required nightly.
-    env:
-      # don't propagate -D warnings into kani's internal compilation
-      RUSTFLAGS: ""
     steps:
       - uses: actions/checkout@v4
 
@@ -67,6 +67,8 @@ jobs:
   bench-check:
     name: benchmarks compile
     runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: "-D warnings"
     steps:
       - uses: actions/checkout@v4
 
