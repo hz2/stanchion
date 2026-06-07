@@ -422,5 +422,5 @@ supports per-node weights for priority (e.g., VIP lanes).
 - E. Dinic, "Algorithm for solution of a problem of maximum flow in a network with power estimation," *Doklady*, 1970.
 - A. Goldberg and R. Tarjan, "A new approach to the maximum-flow problem," *JACM* 35(4), 1988.
 - J. Orlin, "A faster strongly polynomial minimum cost flow algorithm," *Operations Research*, 1997.
-- MIT 6.854 Lecture Notes 2–5 (network flows): `.claude/mit-ocw-references.md`
-- MIT network algorithms course materials: `.claude/mit-network-algos/INDEX.md`
+- MIT 6.854 Advanced Algorithms lecture notes (Karger, 2008): https://ocw.mit.edu/courses/6-854j-advanced-algorithms-fall-2008/pages/lecture-notes/
+- MIT network algorithms scribe notes (Shah et al.)

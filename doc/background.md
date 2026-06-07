@@ -471,7 +471,7 @@ spec functions, proof functions, and requires/ensures clauses. Z3 proves
 properties for all inputs, unboundedly.
 
 Status: not yet integrated. The Verus binary needs to be built from source
-(see `.claude/TODO` for instructions). Float arithmetic is not feasible in
+Float arithmetic is not feasible in
 Verus -- Z3's float theory is incomplete. Good targets once built:
 - XOR pairing as an unbounded proof (complement to Kani's bounded check)
 - Adjacency list index bounds
@@ -530,13 +530,11 @@ service rates, simulation uses its topology to route departing customers.
   Modern treatment. Chapter 2.6 is capacity scaling; chapters 5.1-5.3
   are cycle canceling. Located at ~/Downloads/network-flows.pdf.
 - MIT 6.854 lecture notes (2008, Karger).
-  Lectures 2-5 cover max-flow and min-cost flow. Located at .claude/ocw-6854/.
-- MIT network algorithms scribe notes.
-  Located at .claude/mit-network-algos/.
+  Lectures 2-5 cover max-flow and min-cost flow.
+  https://ocw.mit.edu/courses/6-854j-advanced-algorithms-fall-2008/pages/lecture-notes/
+- MIT network algorithms scribe notes (Shah et al.).
 - Tassiulas and Ephremides (1992). "Stability properties of constrained
   queueing systems and scheduling policies for maximum throughput in multihop
   radio networks." IEEE TAC 37(12).
 - Kleinrock. *Queueing Systems* vol. 1-2. Wiley, 1975.
   M/M/1 derivation and Little's Law.
-- perf-book (~/srcs/perf-book/): Rust performance techniques applied in this
-  repo (LTO, codegen-units, with_capacity, inline).
