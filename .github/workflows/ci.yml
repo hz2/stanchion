@@ -45,14 +45,17 @@ jobs:
     runs-on: ubuntu-latest
     # Kani manages its own toolchain; do not use nix here.
     # The official action installs kani-verifier and the required nightly.
+    env:
+      # don't propagate -D warnings into kani's internal compilation
+      RUSTFLAGS: ""
     steps:
       - uses: actions/checkout@v4
 
       - name: run kani proofs
         uses: model-checking/kani-github-action@v1
         with:
-          # run all harnesses in src/kani_proofs.rs
-          args: "--harness-filter proofs::"
+          # --harness accepts a regex; this matches all proofs:: harnesses
+          args: "--harness proofs::"
 
   bench-check:
     name: benchmarks compile
