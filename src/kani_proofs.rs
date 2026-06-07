@@ -14,7 +14,8 @@ mod proofs {
     fn xor_back_edge_pairing() {
         let cap: f64 = kani::any();
         let cost: f64 = kani::any();
-        kani::assume(cap >= 0.0);
+        // NaN comparisons always return false so >= 0.0 alone doesn't exclude NaN
+        kani::assume(cap.is_finite() && cap >= 0.0);
         kani::assume(cost.is_finite());
 
         let (b, s) = GraphBuilder::new().add_stanchion("s");
@@ -38,8 +39,8 @@ mod proofs {
     fn push_flow_antisymmetric() {
         let cap: f64 = kani::any();
         let push: f64 = kani::any();
-        kani::assume(cap >= 0.0);
-        kani::assume(push >= 0.0);
+        kani::assume(cap.is_finite() && cap >= 0.0);
+        kani::assume(push.is_finite() && push >= 0.0);
         kani::assume(push <= cap);
 
         let (b, s) = GraphBuilder::new().add_stanchion("s");
@@ -60,8 +61,7 @@ mod proofs {
     #[kani::proof]
     fn fresh_residual_capacity_equals_original() {
         let cap: f64 = kani::any();
-        kani::assume(cap >= 0.0);
-        kani::assume(cap < 1e15); // avoid floating-point overflow
+        kani::assume(cap.is_finite() && cap >= 0.0);
 
         let (b, s) = GraphBuilder::new().add_stanchion("s");
         let (b, t) = b.add_stanchion("t");
