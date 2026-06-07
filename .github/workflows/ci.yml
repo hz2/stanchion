@@ -51,6 +51,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: remove toolchain override for kani
+        # rust-toolchain.toml pins nightly-2025-12-03 for local nix dev,
+        # but kani-github-action manages its own nightly. the file causes a
+        # version mismatch that crashes kani-compiler with "multiple input
+        # filenames" -- remove it so kani can use its own toolchain freely.
+        run: rm -f rust-toolchain.toml
+
       - name: run kani proofs
         uses: model-checking/kani-github-action@v1
         with:
