@@ -283,11 +283,11 @@ For a zero-flow removal: $\Delta = 0$ (guaranteed safe pruning).
 
 *Reference: Williamson (2019) Ch. 2.6; Gabow (1985).*
 
-Maintain a scaling parameter `delta` that halves each phase, starting from
-`delta = 2^{floor(log_2 U)}` where `U` is the maximum arc capacity.
+Maintain a scaling parameter $\delta$ that halves each phase, starting from
+$\delta = 2^{\lfloor \log_2 U \rfloor}$ where $U$ is the maximum arc capacity.
 
-**Delta-residual subgraph** `G_f(delta)`: keep only arcs whose residual
-capacity is at least `delta`.
+**$\delta$-residual subgraph** $G_f(\delta)$: keep only arcs whose residual
+capacity is at least $\delta$.
 
 **Algorithm:**
 ```
@@ -298,17 +298,17 @@ while delta >= 1:
     delta <- delta / 2
 ```
 
-**Key lemma (Lemma 2.25, Williamson):** At the start of a `delta`-phase the
-residual max-flow value is at most `2 * m * delta`.  Each augmentation in the
-phase pushes at least `delta` units, so there are at most `2m` augmentations
+**Key lemma (Lemma 2.25, Williamson):** At the start of a $\delta$-phase the
+residual max-flow value is at most $2m\delta$.  Each augmentation in the
+phase pushes at least $\delta$ units, so there are at most $2m$ augmentations
 per phase (Lemma 2.26).
 
-With `O(log U)` phases and `O(m)` BFS per augmentation:
+With $O(\log U)$ phases and $O(m)$ BFS per augmentation:
 $$\text{Complexity} = O(m^2 \log U).$$
 
 Advantages over plain BFS augmentation: for large-capacity networks the phase
-structure keeps augmentations small in number; Dinic's O(V^2 E) is usually
-better for unit graphs; capacity scaling is preferred when U >> V.
+structure keeps augmentations small in number; Dinic's $O(V^2 E)$ is usually
+better for unit graphs; capacity scaling is preferred when $U \gg V$.
 
 ---
 
